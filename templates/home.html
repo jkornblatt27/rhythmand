@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Rhythm And...</title>
+        <link href='https://fonts.googleapis.com/css?family=Alata' rel='stylesheet'>
+        <style>
+            body { 
+                font-family: Alata;
+                background-color: darkgray;
+            }
+            .header {
+                color: Blue;
+                font-weight: bold;
+                font-size: 25px;
+            }
+            .tagline {
+                color: Black;
+                font-size: 14px;
+            }
+            .fail {
+                color: #DC143C;
+            }
+            button {
+                background-color: Black;
+                color: white;
+                font-family: Alata;
+            }
+            .collapsible {
+                background-color: #555;
+                color: white;
+                cursor: pointer;
+                padding: 18px;
+                width: 60%;
+                border: none;
+                text-align: center;
+                outline: none;
+                font-size: 15px;
+            }
+            .active, .collapsible:hover {
+                background-color: black;
+            }
+            .collapsible_content {
+                padding: 0 18px;
+                width: 60%;
+                display: none;
+                overflow: hidden;
+                text-align: left;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="header">
+            <h1><center>rhythm and...</center></h1>
+        </div>
+        <p class="tagline"><center>Enter an album to find out the album's mood. We'll pick out five albums that sound and feel similar.</center></p>
+        <form name="form", action="{{ url_for('results') }}", method="POST", style="text-align: center;">
+            <br>
+            Artist: <input type="text" name="artist", placeholder="Enter artist" required/>
+            <br><br>
+            Album: <input type="text" name="album", placeholder="Enter album" required/>
+            <br><br><br>
+            <button onclick="showDiv();">Submit</button>
+        </form>
+        <br>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                $("form").submit(function(){
+                    document.getElementById("waitingtext").style.display="block";
+                });
+            });
+        </script>
+        <center>
+            <h3 id="waitingtext" style="display: none;">Please wait. Results may take 30 seconds.</h3>
+        </center>
+       <div class='fail'><center>{{ output }}</center></div>
+       <br>
+       <br>
+       <br>
+       <center>
+            <button class="collapsible">The motivation</button>
+            <div class="collapsible_content">
+                <p>As a big music fan, I am always looking for new albums to listen to. I have found that recommendation systems for music heavily weight what the music <span style="font-style: italic;">sounds</span> like and that not enough attention is given to the emotions present in the lyrics. I have also found that most sentiment analysis is fairly simple and typically only classifies text as "positive" or "negative", which is pretty limiting when you consider the complexity of emotion. This project aims to provide a more nuanced method of recommending albums.</p>
+            </div>
+            <br>
+            <br>
+            <br>
+           <button class="collapsible">How it works</button>
+           <div class="collapsible_content">
+            <p>rhythm and... accepts an album and returns the dominant emotion found in the lyrics. The model that is used to score the albums is a linear support vector classifier that was trained on the <a href="https://ai.googleblog.com/2021/10/goemotions-dataset-for-fine-grained.html">GoEmotions</a> dataset, a corpus curated by researchers at Google, which contains Reddit comments that were manually given labels belonging to a set of 27 emotions, as well as a "neutral" label. These labels contain emotions that are fairly general -- such as joy and sadness -- as well as more granular descriptors, such as remorse, gratitude, and curiosity. For the purpose of model fitting, due to limitations in the number of samples for each emotion, emotions were grouped into four prevailing categories using a mapping provided by Google: joy, sadness, anger, and surprise. This mapping was based on a taxonomy developed by Paul Ekman in 1992 that proposed the existence of six core emotions (the four mentioned along with disgust and fear).</p>
+            <p>When fitting the model, two types of classifiers -- a Naive Bayes and a Linear Support Vector Classifer -- were evaluated on the dataset. During the model fitting, a series of hyperparameter values, n-gram representations, and text processing techniques (no processing, stop word removal, lemmatization) were attempted, with 80% of samples used for training and 20% used for testing. To account for class imbalance, an equal number of documents in each of the four emotion categories were randomly sampled. Additionally, a TF-IDF vectorizer was applied to all samples before fitting the model. The best performing model was a Linear Support Vector Classifier trained on lemmatized text with stop words included, using a unigram and unigram+bigram bag of words and a c parameter of 0.1. The model had a weighted F1-score of 62.6%.</p>
+            <p>When scoring an album, the lyrics are downloaded using the <a href="https://lyricsgenius.readthedocs.io/en/master/">lyricsgenius Python client for the Genius API</a>, and the lyrics for each song are cleaned and lemmatized. The model is run on each song and given a joy, sadness, anger, and surprise score, using the class probabilities. To determine the dominant emotion for the album as a whole, the scores for the songs are averaged, and the emotion with the highest average class probability is the winner.</p>
+            <p>The recommendation system takes the emotional and sonic qualities of the requested album and compares them to a database of 11,000+ albums. The emotional qualities are given by the model; the sonic attributes are obtained using the <a href="https://spotipy.readthedocs.io/en/2.19.0/">Python library for the Spotify Web API</a> and include danceability, energy, acousticness, and loudness. The database was obtained by collecting the emotional and sonic scores for albums that were reviewed by Pitchfork. The top five recommended albums are determined using cosine similarity.</p>
+            </div>
+            <br>
+            <br>
+            <br>
+            <button class="collapsible">Future work</button>
+            <div class="collapsible_content">
+                <p>rhythm and... is a work in progress! Some ideas I have for improving the project in the future include:</p>
+                <p><span style="font-weight: bold;">Using a more sophisticated model.</span> A neural network ultimately would likely do a better job at predicting emotions given the ability to evaluate sequences of words, rather than simply using words as features.</p>
+                <p><span style="font-weight: bold;">Including more emotions as classes.</span> The emotions used are pretty general; I would love to be able to classify albums as "nervous" or "confused" as opposed to just happy, sad, angry, or surprised.</p>
+                <p><span style="font-weight: bold;">Adding more albums to the database.</span> The database only includes albums that have been reviewed by Pitchfork, which means that indie rock is somewhat overrepresented. I would love to have a much more diverse collection of music to choose from when recommending new albums.</p>
+                <p><span style="font-weight: bold;">Experimenting with more Spotify features.</span> I handpicked the four features based on what seemed the most representative of what the music sounded like; Spotify has many more attributes to choose from, so using more features could provide even better recommendations.</p>
+                <p><span style="font-weight: bold;">Adding new rules to the recommendation algorithm.</span> The only rule that gets used to filter the database is that no albums from the requested artist are included. As someone who has always been in favor of novelty-based recommendation systems, I may try to recommend albums based on the number of listeners so that it favors overlooked gems over more popular albums.</p>
+            </div>
+            <br>
+            <br>
+            <br>
+            <button class="collapsible">Sources</button>
+            <div class="collapsible_content">
+            <p>Thompson, A. (2019). <span style="font-style: italic;">20,783 Pitchfork Reviews</span> [Data set]. <a href="https://components.one/datasets/pitchfork-reviews-dataset">https://components.one/datasets/pitchfork-reviews-dataset</a></p>
+            <p>Demszky, Dorottya κ.ά. ‘GoEmotions: A Dataset of Fine-Grained Emotions’. <span style="font-style: italic;">58th Annual Meeting of the Association for Computational Linguistics (ACL).</span> N.p., 2020. Print.</p>
+            <p>Paul Ekman. 1992b. An argument for basic emotions. <span style="font-style: italic;">Cognition & Emotion</span>, 6(3-4):169–200.</p>
+            </div>
+        </center>
+        <script>
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
