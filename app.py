@@ -26,9 +26,9 @@ def results():
     # Load data
     data = pd.read_csv("album_db.csv")
     # Connect to Genius and Spotify APIs
-    genius = Genius(os.environ['GENIUS_CLIENT_ACCESS_TOKEN'], verbose=False)
-    client_credentials_manager = SpotifyClientCredentials(os.environ['SPOTIFY_CLIENT_ID'],
-                                                          os.environ['SPOTIFY_CLIENT_SECRET'])
+    genius = Genius(os.environ.get('GENIUS_CLIENT_ACCESS_TOKEN'), verbose=False)
+    client_credentials_manager = SpotifyClientCredentials(os.environ.get('SPOTIFY_CLIENT_ID'),
+                                                          os.environ.get('SPOTIFY_CLIENT_SECRET'))
     sp = spotipy.Spotify(auth_manager=client_credentials_manager)
 
     # Load model and vectorizers
