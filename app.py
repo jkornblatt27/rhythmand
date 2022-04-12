@@ -3,7 +3,6 @@ from string import capwords
 from flask import Flask, request, render_template
 import pandas as pd
 import numpy as np
-import sklearn
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
 
