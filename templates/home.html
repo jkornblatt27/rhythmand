@@ -60,21 +60,12 @@
             <br><br>
             Album: <input type="text" name="album", placeholder="Enter album" required/>
             <br><br><br>
-            <button onclick="showDiv();">Submit</button>
+            <button>Submit</button>
         </form>
         <br>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-        <script>
-            $(document).ready(function(){
-                $("form").submit(function(){
-                    document.getElementById("waitingtext").style.display="block";
-                });
-            });
-        </script>
-        <center>
-            <h3 id="waitingtext" style="display: none;">Please wait. Results may take 30 seconds.</h3>
-        </center>
-       <div class='fail'><center>{{ output }}</center></div>
+       <div class='fail'><center>{{ output_1 }}</center></div>
+        <br>
+       <div class='fail'><center>{{ output_2 }}</center></div>
        <br>
        <br>
        <br>
@@ -88,10 +79,10 @@
             <br>
            <button class="collapsible">How it works</button>
            <div class="collapsible_content">
-            <p>rhythm and... accepts an album and returns the dominant emotion found in the lyrics. The model that is used to score the albums is a linear support vector classifier that was trained on the <a href="https://ai.googleblog.com/2021/10/goemotions-dataset-for-fine-grained.html">GoEmotions</a> dataset, a corpus curated by researchers at Google, which contains Reddit comments that were manually given labels belonging to a set of 27 emotions, as well as a "neutral" label. These labels contain emotions that are fairly general -- such as joy and sadness -- as well as more granular descriptors, such as remorse, gratitude, and curiosity. For the purpose of model fitting, due to limitations in the number of samples for each emotion, emotions were grouped into four prevailing categories using a mapping provided by Google: joy, sadness, anger, and surprise. This mapping was based on a taxonomy developed by Paul Ekman in 1992 that proposed the existence of six core emotions (the four mentioned along with disgust and fear).</p>
+            <p>rhythm and... accepts an album and returns the dominant emotion found in the lyrics. The model that is used to score the albums is a Linear Support Vector Classifier that was trained on the <a href="https://ai.googleblog.com/2021/10/goemotions-dataset-for-fine-grained.html">GoEmotions</a> dataset, a corpus curated by researchers at Google, which contains Reddit comments that were manually given labels belonging to a set of 27 emotions, as well as a "neutral" label. These labels contain emotions that are fairly general -- such as joy and sadness -- as well as more granular descriptors, such as remorse, gratitude, and curiosity. For the purpose of model fitting, due to limitations in the number of samples for each emotion, emotions were grouped into four prevailing categories using a mapping provided by Google: joy, sadness, anger, and surprise. This mapping was based on a taxonomy developed by Paul Ekman in 1992 that proposed the existence of six core emotions (the four mentioned along with disgust and fear).</p>
             <p>When fitting the model, two types of classifiers -- a Naive Bayes and a Linear Support Vector Classifer -- were evaluated on the dataset. During the model fitting, a series of hyperparameter values, n-gram representations, and text processing techniques (no processing, stop word removal, lemmatization) were attempted, with 80% of samples used for training and 20% used for testing. To account for class imbalance, an equal number of documents in each of the four emotion categories were randomly sampled. Additionally, a TF-IDF vectorizer was applied to all samples before fitting the model. The best performing model was a Linear Support Vector Classifier trained on lemmatized text with stop words included, using a unigram and unigram+bigram bag of words and a c parameter of 0.1. The model had a weighted F1-score of 62.6%.</p>
-            <p>When scoring an album, the lyrics are downloaded using the <a href="https://lyricsgenius.readthedocs.io/en/master/">lyricsgenius Python client for the Genius API</a>, and the lyrics for each song are cleaned and lemmatized. The model is run on each song and given a joy, sadness, anger, and surprise score, using the class probabilities. To determine the dominant emotion for the album as a whole, the scores for the songs are averaged, and the emotion with the highest average class probability is the winner.</p>
-            <p>The recommendation system takes the emotional and sonic qualities of the requested album and compares them to a database of 11,000+ albums. The emotional qualities are given by the model; the sonic attributes are obtained using the <a href="https://spotipy.readthedocs.io/en/2.19.0/">Python library for the Spotify Web API</a> and include danceability, energy, acousticness, and loudness. The database was obtained by collecting the emotional and sonic scores for albums that were reviewed by Pitchfork. The top five recommended albums are determined using cosine similarity.</p>
+            <p>The model was then used to create a database of 11,000+ albums, which rhythm and... queries from when returning the emotion of the album and recommending five similar albums. The database was created by gathering the emotional and sonic qualities of <a href="https://components.one/datasets/pitchfork-reviews-dataset">albums that were reviewed by Pitchfork.</a> For each album in the Pitchfork dataset, lyrics for each song off the album were downloaded using the <a href="https://lyricsgenius.readthedocs.io/en/master/">lyricsgenius Python client for the Genius API</a>, and then were cleaned and lemmatized. The model was then run on each song and given a joy, sadness, anger, and surprise score using the class probabilities. To determine the dominant emotion for the album as a whole, the scores for the songs were averaged, and the emotion with the highest average class probability was the winner. The sonic attributes of each album were obtained using the <a href="https://spotipy.readthedocs.io/en/2.19.0/">Python library for the Spotify Web API</a> and include danceability, energy, acousticness, and loudness.</p>
+            <p>The recommendation system compares the requested album to the rest of the database. The top five recommended albums are determined using cosine similarity.</p>
             </div>
             <br>
             <br>
