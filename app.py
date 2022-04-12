@@ -30,7 +30,8 @@ def home():
 @app.route('/results', methods=['POST'])
 def results():
     # Load data
-    data = pd.read_csv("album_db.csv")
+    data = pd.read_csv("album_db.csv", iterator=True, chunksize=1000)
+    data = pd.concat(data, ignore_index=True)
 
     # Get artist and album names from form
     artist = request.form.get("artist").strip().lower()
