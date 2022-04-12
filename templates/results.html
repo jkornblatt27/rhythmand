@@ -35,28 +35,6 @@
         <center><img src="{{ album_art }}", style="width:400px;height:400px;"></center>
         <br><br><br>
         <p><center>The album {{ album }} by {{ artist }} has an overall mood of <span class="mood">{{ album_mood }}</span>.</center></p>
-        <br>
-        <br><center><input type="button" value="Click to see the mood of each song" onclick="showDiv()"></center>
-        <div id="song_mood_button" style="display:none;">
-            {%for i in range(n_songs)%}
-                {% for song, mood in song_moods[i].items() %}
-                    <p><center> {{ song }} is <span style="color:{{ song_mood_colors[i] }};text-transform:uppercase;">{{ mood }}</span></center></p>
-                {% endfor %}
-            {% endfor %} 
-            <br>
-            <br>
-            <br>
-        </div>
-        <script>
-            function showDiv() {
-                if (document.getElementById('song_mood_button').style.display == "none") {
-                    document.getElementById('song_mood_button').style.display = "block";
-                }
-                else {
-                    document.getElementById('song_mood_button').style.display = "none";
-            }
-        }
-        </script>
         <h2><center>If you like {{ album }}, you may also like:</center></h2>
         {%for i in range(5)%}
         <figure>

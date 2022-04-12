@@ -1,17 +1,23 @@
-import pickle
-import re
 from string import capwords
-import os
 
-import requests
 from flask import Flask, request, render_template
 import pandas as pd
+import numpy as np
 import sklearn
-from lyricsgenius import Genius
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics.pairwise import cosine_similarity
 
-from app_helpers import *
+def get_similarity_indices(data):
+    """Get the indices of the five most similar albums using cosine similarity"""
+    scaler = MinMaxScaler()
+    for col in data.columns:
+        data[col] = scaler.fit_transform(
+            np.array(data[col]).reshape(-1, 1))  # Normalize  each column so they all scale from (0, 1)
+    cos_sim = cosine_similarity(data, data)  # Create cosine similarity matrix
+    sim_scores = list(enumerate(cos_sim[len(cos_sim) - 1]))  # Get cosine similarity scores for requested album
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    inds = [i[0] for i in sim_scores[1:6]]  # Get the indices of the top five most similar albums
+    return inds
 
 app = Flask(__name__)
 
@@ -25,41 +31,24 @@ def home():
 def results():
     # Load data
     data = pd.read_csv("album_db.csv")
-    # Connect to Genius and Spotify APIs
-    genius = Genius(os.environ.get('GENIUS_CLIENT_ACCESS_TOKEN'), verbose=False)
-    client_credentials_manager = SpotifyClientCredentials(os.environ.get('SPOTIFY_CLIENT_ID'),
-                                                          os.environ.get('SPOTIFY_CLIENT_SECRET'))
-    sp = spotipy.Spotify(auth_manager=client_credentials_manager)
-
-    # Load model and vectorizers
-    model = pickle.load(open("clean_lemmatizedsvm_2_gram_0.1_c_model.pickle", 'rb'))
-    countvectorizer = pickle.load(open("clean_lemmatizedsvm_2_gram_0.1_c_countvectorizer.pickle", 'rb'))
-    tfidfvectorizer = pickle.load(open("clean_lemmatizedsvm_2_gram_0.1_c_tfidfvectorizer.pickle", 'rb'))
 
     # Get artist and album names from form
     artist = request.form.get("artist").strip().lower()
     album = request.form.get("album").strip().lower()
 
-    try:
-        genius_album, spotify_album = validate_album(genius, sp, album, artist)
-    except requests.exceptions.Timeout:
-        # Return an error message if the operation times out
-        error_message = 'The operation timed out. Please ensure the artist and album names are ' \
-                        'spelled correctly and try again.'
-        return render_template('home.html', output=error_message)
-    except Exception:
-        # Return an error message if the album is not found
-        error_message = '{album} by {artist} not found. ' \
-                        'Please ensure the artist and album names ' \
-                        'are spelled correctly and try again.'.format(album=capwords(album), artist=capwords(artist))
-        return render_template('home.html', output=error_message)
-        # Gather Genius and Spotify data on the album
+    requested_album = data.loc[
+        (data['artist'].apply(lambda x: x.lower()) == artist) & (data['album'].apply(lambda x: x.lower()) == album)]
+
+    if len(requested_album) == 0:
+        error_message1 = 'The album {album} by {artist} was not found in the database.'.format(album=capwords(album),
+                                                                                               artist=capwords(artist))
+        error_message2 = 'Please try a different album, or ensure the album and artist names are spelled correctly ' \
+                         'and try again.'
+        return render_template('home.html', output_1=error_message1, output_2=error_message2)
     else:
-        genius_album_score, genius_song_scores = genius_score_album(genius_album, countvectorizer,
-                                                                    tfidfvectorizer,
-                                                                    model)  # Get raw emotion scores using model
-        album_mood, song_moods = get_dominant_emotions(genius_album_score,
-                                                       genius_song_scores)  # Get dominant mood for album/songs
+        album_art = requested_album['album_art'].iloc[0]
+        emotions = requested_album[["anger", "joy", "sadness", "surprise"]].reset_index(drop=True)
+        album_mood = emotions.idxmax(axis=1)[0]
 
         # Have the results page use a different color for each mood
         mood_colors = {
@@ -70,15 +59,10 @@ def results():
         }
 
         mood_color = mood_colors[album_mood]
-        song_mood_colors = [mood_colors[list(i.values())[0]] for i in song_moods]
-        n_songs = len(song_moods)
 
-        feats, album_art = get_spotify_data(sp, spotify_album)  # Spotify data
-        spot_dict = create_spotify_dict(feats)
-        all_feats = {**spot_dict, **genius_album_score}  # Combine Spotify and scored Genius data into one dictionary
         data = data.loc[data['artist'].apply(
             lambda x: x.lower()) != artist]  # Ensure no albums from the same artist are included in recommendation
-        data = data.append(all_feats, ignore_index=True)
+        data = data.append(requested_album, ignore_index=True)
         data['id'] = data.index
         album_info = data[["id", "artist", "album", "album_art"]]
         album_features = data[
@@ -91,8 +75,7 @@ def results():
         top_five_album = top_five['album'].tolist()
         top_five_art = top_five['album_art'].tolist()
         return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
-                               song_moods=song_moods, album_art=album_art, mood_color=mood_color,
-                               song_mood_colors=song_mood_colors, n_songs=n_songs, top_five_artist=top_five_artist,
+                               album_art=album_art, mood_color=mood_color, top_five_artist=top_five_artist,
                                top_five_album=top_five_album, top_five_art=top_five_art)
 
 
