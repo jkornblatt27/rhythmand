@@ -32,19 +32,13 @@
         <div class="header">
             <h1><center>rhythm and...</center></h1>
         </div>
-        <center><img src="{{ album_art }}", style="width:400px;height:400px;"></center>
         <br><br><br>
         <p><center>The album {{ album }} by {{ artist }} has an overall mood of <span class="mood">{{ album_mood }}</span>.</center></p>
         <h2><center>If you like {{ album }}, you may also like:</center></h2>
-        {%for i in range(5)%}
-        <figure>
-            <br>
-            <img src="{{ top_five_art[i] }}", style="width:200px;height:200px;">
-            <br>
-            <figcaption>{{ top_five_album[i] }}
-                <br>{{ top_five_artist[i]}}
-            </figcaption>
-        </figure>
-        {% endfor %}
+        <center>
+            {%for i in range(5)%}
+            <ol>{{ top_five_album[i] }}, {{ top_five_artist[i]}}</ol>
+            {% endfor %}
+        </center>
     </body>
 </html>

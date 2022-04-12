@@ -47,7 +47,6 @@ def results():
                          'and try again.'
         return render_template('home.html', output_1=error_message1, output_2=error_message2)
     else:
-        album_art = requested_album['album_art'].iloc[0]
         emotions = requested_album[["anger", "joy", "sadness", "surprise"]].reset_index(drop=True)
         album_mood = emotions.idxmax(axis=1)[0]
 
@@ -65,7 +64,7 @@ def results():
             lambda x: x.lower()) != artist]  # Ensure no albums from the same artist are included in recommendation
         data = data.append(requested_album, ignore_index=True)
         data['id'] = data.index
-        album_info = data[["id", "artist", "album", "album_art"]]
+        album_info = data[["id", "artist", "album"]]
         album_features = data[
             ["id", "danceability", "energy", "acousticness", "loudness", "anger", "joy", "sadness", "surprise"]]
         album_features = album_features.set_index("id")
@@ -74,10 +73,8 @@ def results():
         top_five = pd.merge(sim, album_info, on='id')
         top_five_artist = top_five['artist'].tolist()
         top_five_album = top_five['album'].tolist()
-        top_five_art = top_five['album_art'].tolist()
         return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
-                               album_art=album_art, mood_color=mood_color, top_five_artist=top_five_artist,
-                               top_five_album=top_five_album, top_five_art=top_five_art)
+                               mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
 
 
 if __name__ == '__main__':
