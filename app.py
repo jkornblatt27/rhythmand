@@ -35,9 +35,10 @@ def results():
         return render_template('home.html', output_1=error_message1, output_2=error_message2)
     else:
 
-        # Have the results page use a different color for each mood
+        album_art = results[0][4]
         album_mood = results[0][5]
 
+        # Have the results page use a different color for each mood
         mood_colors = {
             'anger': '#DC143C',
             'joy': '#FFD700',
@@ -54,24 +55,26 @@ def results():
         id4 = results[0][9]
         id5 = results[0][10]
 
-        top5query = """SELECT artist, album from albums where id = %(id1)s
+        top5query = """SELECT artist, album, album_art from albums where id = %(id1)s
         UNION ALL
-        SELECT artist, album from albums where id = %(id2)s
+        SELECT artist, album, album_art from albums where id = %(id2)s
         UNION ALL
-        SELECT artist, album from albums where id = %(id3)s
+        SELECT artist, album, album_art from albums where id = %(id3)s
         UNION ALL 
-        SELECT artist, album from albums where id = %(id4)s 
+        SELECT artist, album, album_art from albums where id = %(id4)s 
         UNION ALL
-        SELECT artist, album from albums where id = %(id5)s
+        SELECT artist, album, album_art from albums where id = %(id5)s
         """
         cur.execute(top5query, {'id1': id1, 'id2': id2, 'id3': id3, 'id4': id4, 'id5': id5})
         top5 = cur.fetchall()
         top_five_artist = [result[0] for result in top5]
         top_five_album = [result[1] for result in top5]
+        top_five_art = [result[2] for result in top5]
         cur.close()
         conn.close()
         return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
-                               mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
+                               album_art=album_art, mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album,
+                               top_five_art=top_five_art)
 
 
 if __name__ == '__main__':
