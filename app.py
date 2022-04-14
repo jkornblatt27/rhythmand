@@ -18,8 +18,8 @@ def home():
 def results():
 
     # Connect to the database
-    DATABASE_URL = os.environ.get(‘DATABASE_URL’)
-    conn = psycopg2.connect(DATABASE_URL)
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    conn = psycopg2.connect('DATABASE_URL')
     cur = conn.cursor()
 
     # Get artist and album names from form
@@ -73,6 +73,9 @@ def results():
         top_five_album = [result[1] for result in top5]
         return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
                                mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
+
+        cur.close()
+        conn.close()
 
 
 if __name__ == '__main__':
