@@ -3,8 +3,6 @@ from string import capwords
 
 from flask import Flask, request, render_template
 import psycopg2
-import pandas as pd
-import numpy as np
 
 
 app = Flask(__name__)
@@ -31,7 +29,7 @@ def results():
     cur.execute(query, {'artist': artist, 'album': album})
     results = cur.fetchall()
 
-    if len(requested_album) == 0:
+    if len(results) == 0:
         error_message1 = 'The album {album} by {artist} was not found in the database.'.format(album=capwords(album),
                                                                                                artist=capwords(artist))
         error_message2 = 'Please try a different album, or ensure the album and artist names are spelled correctly ' \
