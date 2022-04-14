@@ -27,8 +27,8 @@ def results():
     artist = request.form.get("artist").strip().lower()
     album = request.form.get("album").strip().lower()
 
-    query = """SELECT * from albums where lower(artist) = (%artist) and lower(album) = (%album)"""
-    cur.execute(query, [artist, album])
+    query = """SELECT * from albums where lower(artist) = %(artist)s and lower(album) = %(album)s"""
+    cur.execute(query, (artist, album))
     results = cur.fetchall()
 
     if len(requested_album) == 0:
