@@ -4,7 +4,6 @@ from string import capwords
 from flask import Flask, request, render_template
 import psycopg2
 
-
 app = Flask(__name__)
 
 
@@ -15,7 +14,6 @@ def home():
 
 @app.route('/results', methods=['POST'])
 def results():
-
     # Connect to the database
     DATABASE_URL = os.environ.get('DATABASE_URL')
     conn = psycopg2.connect(DATABASE_URL)
@@ -38,7 +36,7 @@ def results():
     else:
 
         # Have the results page use a different color for each mood
-        album_mood = results[5]
+        album_mood = results[0][5]
 
         mood_colors = {
             'anger': '#DC143C',
@@ -50,31 +48,30 @@ def results():
         mood_color = mood_colors[album_mood]
 
         # Get indices of five most similar albums
-        id1 = results[6]
-        id2 = results[7]
-        id3 = results[8]
-        id4 = results[9]
-        id5 = results[10]
+        id1 = results[0][6]
+        id2 = results[0][7]
+        id3 = results[0][8]
+        id4 = results[0][9]
+        id5 = results[0][10]
 
-        top5query = f"""SELECT artist, album from albums where id = {id1} 
+        top5query = """SELECT artist, album from albums where id = %(id1)s
         UNION ALL
-        SELECT artist, album from albums where id = {id2} 
+        SELECT artist, album from albums where id = %(id2)s
         UNION ALL
-        SELECT artist, album from albums where id = {id3}
+        SELECT artist, album from albums where id = %(id3)s
         UNION ALL 
-        SELECT artist, album from albums where id = {id4} 
+        SELECT artist, album from albums where id = %(id4)s 
         UNION ALL
-        SELECT artist, album from albums where id = {id5}
+        SELECT artist, album from albums where id = %(id5)s
         """
-        cur.execute(top5query)
+        cur.execute(top5query, {'id1': id1, 'id2': id2, 'id3': id3, 'id4': id4, 'id5': id5})
         top5 = cur.fetchall()
         top_five_artist = [result[0] for result in top5]
         top_five_album = [result[1] for result in top5]
-        return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
-                               mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
-
         cur.close()
         conn.close()
+        return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
+                               mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
 
 
 if __name__ == '__main__':
