@@ -20,7 +20,7 @@ def results():
 
     # Connect to the database
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    conn = psycopg2.connect('DATABASE_URL')
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
     # Get artist and album names from form
