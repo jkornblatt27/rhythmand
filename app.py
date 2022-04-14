@@ -1,22 +1,10 @@
 from string import capwords
 
 from flask import Flask, request, render_template
+import psycopg2
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics.pairwise import cosine_similarity
 
-def get_similarity_indices(data):
-    """Get the indices of the five most similar albums using cosine similarity"""
-    scaler = MinMaxScaler()
-    for col in data.columns:
-        data[col] = scaler.fit_transform(
-            np.array(data[col]).reshape(-1, 1))  # Normalize  each column so they all scale from (0, 1)
-    cos_sim = cosine_similarity(data, data)  # Create cosine similarity matrix
-    sim_scores = list(enumerate(cos_sim[len(cos_sim) - 1]))  # Get cosine similarity scores for requested album
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    inds = [i[0] for i in sim_scores[1:6]]  # Get the indices of the top five most similar albums
-    return inds
 
 app = Flask(__name__)
 
@@ -28,16 +16,19 @@ def home():
 
 @app.route('/results', methods=['POST'])
 def results():
-    # Load data
-    data = pd.read_csv("album_db.csv", iterator=True, chunksize=1000)
-    data = pd.concat(data, ignore_index=True)
+
+    # Connect to the database
+    DATABASE_URL = os.environ.get(‘DATABASE_URL’)
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
 
     # Get artist and album names from form
     artist = request.form.get("artist").strip().lower()
     album = request.form.get("album").strip().lower()
 
-    requested_album = data.loc[
-        (data['artist'].apply(lambda x: x.lower()) == artist) & (data['album'].apply(lambda x: x.lower()) == album)]
+    query = f"""SELECT * from albums where lower(artist) = {artist} and lower(album) = {album}"""
+    cur.execute(query)
+    results = cur.fetchall()
 
     if len(requested_album) == 0:
         error_message1 = 'The album {album} by {artist} was not found in the database.'.format(album=capwords(album),
@@ -46,10 +37,10 @@ def results():
                          'and try again.'
         return render_template('home.html', output_1=error_message1, output_2=error_message2)
     else:
-        emotions = requested_album[["anger", "joy", "sadness", "surprise"]].reset_index(drop=True)
-        album_mood = emotions.idxmax(axis=1)[0]
 
         # Have the results page use a different color for each mood
+        album_mood = results[5]
+
         mood_colors = {
             'anger': '#DC143C',
             'joy': '#FFD700',
@@ -59,19 +50,27 @@ def results():
 
         mood_color = mood_colors[album_mood]
 
-        data = data.loc[data['artist'].apply(
-            lambda x: x.lower()) != artist]  # Ensure no albums from the same artist are included in recommendation
-        data = data.append(requested_album, ignore_index=True)
-        data['id'] = data.index
-        album_info = data[["id", "artist", "album"]]
-        album_features = data[
-            ["id", "danceability", "energy", "acousticness", "loudness", "anger", "joy", "sadness", "surprise"]]
-        album_features = album_features.set_index("id")
-        most_similar = get_similarity_indices(album_features)
-        sim = pd.DataFrame(most_similar, columns=['id'])
-        top_five = pd.merge(sim, album_info, on='id')
-        top_five_artist = top_five['artist'].tolist()
-        top_five_album = top_five['album'].tolist()
+        # Get indices of five most similar albums
+        id1 = results[6]
+        id2 = results[7]
+        id3 = results[8]
+        id4 = results[9]
+        id5 = results[10]
+
+        top5query = f"""SELECT artist, album from albums where id = {id1} 
+        UNION ALL
+        SELECT artist, album from albums where id = {id2} 
+        UNION ALL
+        SELECT artist, album from albums where id = {id3}
+        UNION ALL 
+        SELECT artist, album from albums where id = {id4} 
+        UNION ALL
+        SELECT artist, album from albums where id = {id5}
+        """
+        cur.execute(top5query)
+        top5 = cur.fetchall()
+        top_five_artist = [result[0] for result in top5]
+        top_five_album = [result[1] for result in top5]
         return render_template('results.html', album=capwords(album), artist=capwords(artist), album_mood=album_mood,
                                mood_color=mood_color, top_five_artist=top_five_artist, top_five_album=top_five_album)
 
