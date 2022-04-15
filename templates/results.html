@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Rhythm And...</title>
+        <link href='https://fonts.googleapis.com/css?family=Alata' rel='stylesheet'>
+        <style>  
+            body { 
+                font-family: Alata;
+                background-color: darkgray;
+            }
+            .header {
+                color: Blue;
+                font-weight: bold;
+                font-size: 25px;
+            }
+            .mood {
+                text-transform: uppercase;
+                color: {{ mood_color }};
+            }
+            figure {
+                text-align: center;
+            }
+            input {
+                background-color: Black;
+                color: white;
+                font-family: Alata;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="header">
+            <h1><center>rhythm and...</center></h1>
+        </div>
+        <center><img src="{{ album_art }}", style="width:400px;height:400px;"></center>
+        <br><br><br>
+        <p><center>The album {{ album }} by {{ artist }} has an overall mood of <span class="mood">{{ album_mood }}</span>.</center></p>
+        <h2><center>If you like {{ album }}, you may also like:</center></h2>
+        {%for i in range(5)%}
+        <figure>
+            <br>
+            <img src="{{ top_five_art[i] }}", style="width:200px;height:200px;">
+            <br>
+            <figcaption>{{ top_five_album[i] }}
+                <br>{{ top_five_artist[i]}}
+            </figcaption>
+        </figure>
+        {% endfor %}
+    </body>
+</html>
