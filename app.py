@@ -15,7 +15,7 @@ def home():
 @app.route('/results', methods=['POST'])
 def results():
     # Connect to the database
-    DATABASE_URL = os.environ.get('HEROKU_POSTGRESQL_COPPER_URL')
+    DATABASE_URL = os.environ.get('DATABASE_URL')
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
